@@ -1,0 +1,30 @@
+#~/.gitconfig
+
+[alias]
+	alias = ! git config --get-regexp ^alias\\. | sed -e s/^alias\\.// -e s/\\ /\\ =\\ /
+	cm = commit -a
+	co = checkout
+	pm = pull origin master
+	log-graph = log --graph --all --decorate --stat --date=iso
+	current-branch = git config --global alias.log-graph 'log --graph --all --decorate --stat --date=iso' branch | grep '*' | cut -c3-
+	branches = branch --all
+	delete-branch = "!_() { test -n \"$1\" && git branch -D $1 && git push origin :$1; }; _ "
+	prune-branches = "git config --global alias.delete-branch '!_() { test -n  && git branch -D  && git push origin :; }; _ ' fetch --prune; git branch -D ;"
+	delete-tag = "!_() { test -n \"$1\" && git tag -d $1 && git push origin \":refs/tags/$1\"; }; _ "
+	ignored = ls-files --others -i --exclude-standard
+	last-commit = log -n1
+	last-local-branch = for-each-ref --sort=-committerdate refs/heads/ --format='%(refname:short)' --count=1
+	list = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative
+	make-release = "!_() { if test \"$#\" != \"2\" ; then echo \"git make-release TAG_NUMBER DESCRIPTION\"; return 1; fi; LAST_BRANCH=$(git last-local-branch); git stash && git co release && git pull origin release && git merge master && git fetch --tags && git tag -a \"$1\" -m \"$2\" && git push origin release --tags; git co $LAST_BRANCH; git stash pop || true; }; _ "
+	new-commits = log ORIG_HEAD.. --stat --no-merges
+	standup = !git list --since yesterday
+	switch = "!_() { if test -n \"$1\"; then git stash save; git checkout $1; fi; }; _ "
+	sync = !BRANCH=$(git current-branch) && echo $BRANCH && git stash && git pull origin $BRANCH && git push origin $BRANCH && git stash pop
+	sync-all = "!git sync; git fetch --tags"
+	tags = for-each-ref --sort='*authordate' --format='%(tag) [%(taggerdate:short)]' refs/tags
+	update = !test -n \"$1\" && git checkout $1 && git pull origin $1 --tags
+	current-tag = describe --tags --exact-match
+	latest-tag = git config --global alias.current-tag 'describe --tags --exact-match' tags | cut -d' ' -f1 | tail -n1
+	merged-branches = !git branch --merged | grep -v \"\\*\"
+	new-branch = "!_() { \n    \n    local LOCAL_BRANCH_EXISTS=$(git branch | grep -sx $1 > /dev/null; echo $?);\n    if [ \"$LOCAL_BRANCH_EXISTS\" -eq 0 ]; then\n        echo \"Branch \\\"$1\\\" already exists!\"\n        exit 1;\n    fi\n\n    local REMOTE_BRANCH_EXISTS=$(git ls-remote --heads | grep -x \"$1\" > /dev/null; echo $?);\n    if [ \"$REMOTE_BRANCH_EXISTS\" -eq 0 ]; then\n        echo \"git fetch origin $1; git checkout -b $1 --track origin/$1; git merge origin/$1;\";\n        git fetch origin $1;\n        git checkout -b $1 --track origin/$1;\n        git merge origin/$1;\n    else \n        echo \"git checkout -b $1; git push --set-upstream origin $1;\"\n        git checkout -b $1; git push --set-upstream origin $1;\n    fi \n}; _ "
+
